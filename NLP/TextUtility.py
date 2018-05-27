@@ -20,7 +20,7 @@ class TextUtility(object):
         # add meaning to the review, we will also be filtering out the stopwords.
 
         # 1. Remove HTML
-        review_text = BeautifulSoup(review).get_text()
+        review_text = BeautifulSoup(review, "lxml").get_text()
         #
         # 2. Replace numbers with NUM
         review_text = re.sub("[0-9]]","NUM" , review_text)
@@ -41,17 +41,24 @@ class TextUtility(object):
         return(words)
 
     @staticmethod
-    def cleanReviewAndSequenize( data , max_review_length = 200 ):
+    def cleanReviewAndSequenize( traindata , testdata , max_review_length = 200 ):
 
-        all_reviews = [TextUtility.cleanReview(t) for t in data ]
+        train_clean_reviews = [TextUtility.cleanReview(t) for t in traindata ]
+        test_clean_reviews = [TextUtility.cleanReview(t) for t in testdata ]
 
+        all_reviews = train_clean_reviews + test_clean_reviews
+        print("cleaned the reviews")
         # Tokenize the reviews
         tokenizer = Tokenizer()
         tokenizer.fit_on_texts(all_reviews)
-        train_seq = tokenizer.texts_to_sequences(all_reviews)
+        train_seq = tokenizer.texts_to_sequences(train_clean_reviews)
+        test_seq = tokenizer.texts_to_sequences(test_clean_reviews)
 
         # Total number of words found and sequenced
-        numberOfWords = tokenizer.word_index
-
+        numberOfWords = len(tokenizer.word_index)
+        #print(numberOfWords)
         # restrict all the reviews to a strict length... by default it is 200 for below
         train_pad = pad_sequences(train_seq, maxlen=max_review_length)
+        test_pad = pad_sequences(test_seq, maxlen=max_review_length)
+
+        return train_pad,test_pad,numberOfWords,max_review_length
