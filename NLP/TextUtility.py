@@ -20,7 +20,7 @@ class TextUtility(object):
         # add meaning to the review, we will also be filtering out the stopwords.
 
         # 1. Remove HTML
-        review_text = BeautifulSoup(review, "lxml").get_text()
+        review_text = BeautifulSoup(review).get_text()
         #
         # 2. Replace numbers with NUM
         review_text = re.sub("[0-9]]","NUM" , review_text)
@@ -38,7 +38,7 @@ class TextUtility(object):
             words = [w for w in words if not w in stops]
         #
         # 5. Return a list of words
-        return(words)
+        return(" ".join(words))
 
     @staticmethod
     def cleanReviewAndSequenize( traindata , testdata , max_review_length = 200 ):
@@ -49,7 +49,7 @@ class TextUtility(object):
         all_reviews = train_clean_reviews + test_clean_reviews
         print("cleaned the reviews")
         # Tokenize the reviews
-        tokenizer = Tokenizer()
+        tokenizer = Tokenizer(num_words=50000)
         tokenizer.fit_on_texts(all_reviews)
         train_seq = tokenizer.texts_to_sequences(train_clean_reviews)
         test_seq = tokenizer.texts_to_sequences(test_clean_reviews)

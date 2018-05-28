@@ -1,10 +1,9 @@
 import pandas as pd
-from TextUtility import TextUtility
 import numpy as np
 import tensorflow as tf
 
 
-def cnn_model(data, labels, VOCAB_SIZE , EMBEDDING_DIMENSION=100 , MAX_SEQUENCE_LENGTH = 200 ):
+def cnn_model(data, labels, VOCAB_SIZE , EMBEDDING_DIMENSION=128 , MAX_SEQUENCE_LENGTH = 200 ):
     """2 layer ConvNet to predict from sequence of words to a class."""
     # Convert indexes of words into embeddings.
     # This creates embeddings matrix of [n_words, EMBEDDING_SIZE] and then
@@ -28,7 +27,7 @@ def cnn_model(data, labels, VOCAB_SIZE , EMBEDDING_DIMENSION=100 , MAX_SEQUENCE_
         embedded_chars_expanded = tf.expand_dims(embed, -1)
 
     print( embedded_chars_expanded )
-    with tf.variable_scope('CNN_Layer1'):
+    with tf.variable_scope('CNN_Layer1_2'):
         # Apply Convolution filtering on input sequence.
         conv1 = tf.layers.conv2d(
             inputs=tf.reshape(embedded_chars_expanded,[-1,MAX_SEQUENCE_LENGTH,EMBEDDING_DIMENSION,1]),
@@ -46,12 +45,12 @@ def cnn_model(data, labels, VOCAB_SIZE , EMBEDDING_DIMENSION=100 , MAX_SEQUENCE_
         # Transpose matrix so that n_filters from convolution becomes width.
         #pool1 = tf.transpose(pool1, [0, 1, 3, 2])
         drop = tf.layers.dropout(pool1, rate=0.25)
-    with tf.variable_scope('CNN_Layer2'):
+    with tf.variable_scope('CNN_Layer2_2'):
         # Second level of convolution filtering.
         conv2 = tf.layers.conv2d(
-            inputs=pool1,
+            inputs=drop,
             filters=10,
-            kernel_size=[20,10],
+            kernel_size=[20,EMBEDDING_DIMENSION//2],
             padding='SAME',# Add a ReLU for non linearity.
             activation=tf.nn.relu)
         # Max pooling across output of Convolution+Relu.
@@ -61,11 +60,11 @@ def cnn_model(data, labels, VOCAB_SIZE , EMBEDDING_DIMENSION=100 , MAX_SEQUENCE_
             strides=[1, 4],
             padding='VALID')
         # Max across each filter to get useful features for classification.
-        pool2 = tf.squeeze(pool2)
-
-    with tf.variable_scope('fully_connected') as scope:
+        #pool3 = tf.squeeze(pool2)
+        flat = tf.reshape(drop, [-1, (MAX_SEQUENCE_LENGTH)*(EMBEDDING_DIMENSION//8)*10])
+    with tf.variable_scope('fully_connected_2') as scope:
         # Apply regular WX + B and classification.
-        fullyconnectedLayer = tf.layers.dense(pool2, 15, activation=None)
+        fullyconnectedLayer = tf.layers.dense(flat, 15, activation=None)
         drop = tf.layers.dropout(fullyconnectedLayer, rate=0.5)
         output = tf.layers.dense(inputs=drop, units=1, activation=tf.nn.sigmoid, name=scope.name)
 
@@ -106,7 +105,7 @@ with tf.name_scope('inputs'):
 with tf.name_scope('labels'):
     labels = tf.placeholder(tf.int32, name='labels')
 
-output = cnn_model(data, labels, VOCAB_SIZE=VOCAB_SIZE,EMBEDDING_DIMENSION=100,MAX_SEQUENCE_LENGTH=MAX_SEQUENCE_LENGTH)
+output = cnn_model(data, labels, VOCAB_SIZE=VOCAB_SIZE,EMBEDDING_DIMENSION=16,MAX_SEQUENCE_LENGTH=MAX_SEQUENCE_LENGTH)
 # Calculate the cost
 with tf.name_scope('cost'):
     cost = tf.losses.mean_squared_error(labels, output)
