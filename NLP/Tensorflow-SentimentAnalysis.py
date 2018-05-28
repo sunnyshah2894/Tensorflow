@@ -33,27 +33,35 @@ def cnn_model(data, labels, VOCAB_SIZE , EMBEDDING_DIMENSION=100 , MAX_SEQUENCE_
         conv1 = tf.layers.conv2d(
             inputs=tf.reshape(embedded_chars_expanded,[-1,MAX_SEQUENCE_LENGTH,EMBEDDING_DIMENSION,1]),
             filters=10,
-            kernel_size=[20,EMBEDDING_DIMENSION], # so that the entire words are convoluted so that network learns some neighberhood relationship
+            kernel_size=[10,EMBEDDING_DIMENSION], # so that the entire words are convoluted so that network learns some neighberhood relationship
             padding='SAME',
             # Add a ReLU for non linearity.
             activation=tf.nn.relu)
         # Max pooling across output of Convolution+Relu.
         pool1 = tf.layers.max_pooling2d(
             conv1,
-            pool_size=[2,2],
-            strides=2,
-            padding='SAME')
+            pool_size=[1,2],
+            strides=[1,2],
+            padding='VALID')
         # Transpose matrix so that n_filters from convolution becomes width.
-        pool1 = tf.transpose(pool1, [0, 1, 3, 2])
+        #pool1 = tf.transpose(pool1, [0, 1, 3, 2])
+        drop = tf.layers.dropout(pool1, rate=0.25)
     with tf.variable_scope('CNN_Layer2'):
         # Second level of convolution filtering.
         conv2 = tf.layers.conv2d(
             inputs=pool1,
             filters=10,
             kernel_size=[20,10],
+            padding='SAME',# Add a ReLU for non linearity.
+            activation=tf.nn.relu)
+        # Max pooling across output of Convolution+Relu.
+        pool2 = tf.layers.max_pooling2d(
+            conv2,
+            pool_size=[1, 4],
+            strides=[1, 4],
             padding='VALID')
         # Max across each filter to get useful features for classification.
-        pool2 = tf.squeeze(tf.reduce_max(conv2, 1), axis=[1])
+        pool2 = tf.squeeze(pool2)
 
     with tf.variable_scope('fully_connected') as scope:
         # Apply regular WX + B and classification.
@@ -127,7 +135,7 @@ with tf.Session() as sess:
             # print(batch_xs)
             # print(batch_ys)
             _, loss, acc = sess.run([optimizer,cost,accuracy], feed_dict= {data: batch_xs, labels: batch_ys})
-            print( "Batch no: {} -- Accuracy: {} -- Loss: {}".format(currBatchNumber,(float(sum(acc))/batch_size),loss))
+            print( "Batch no: {} -- Accuracy: {} -- Loss: {}".format(currBatchNumber,acc,loss))
 
 
 # # Process vocabulary
