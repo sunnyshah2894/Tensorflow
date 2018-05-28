@@ -61,7 +61,7 @@ model.compile(loss='binary_crossentropy',
 model.summary()
 from keras.callbacks import ModelCheckpoint
 
-filepath="CNN_best_weights.{epoch:02d}-{val_acc:.4f}.hdf5"
+filepath="trained_model_multiconv.h5"
 checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=True, mode='max')
 
 model.fit(X_train, y_train, batch_size=32, epochs=5,
@@ -71,5 +71,5 @@ test_error_rate = model.evaluate(X_test, y_test, verbose=0)
 print("The mean squared error (MSE) for the test data set is: {}".format(test_error_rate))
 
 
-model.save("trained_model-multiconv.h5")
+model.save("trained_model_multiconv.h5")
 print("Model saved to disk.")
